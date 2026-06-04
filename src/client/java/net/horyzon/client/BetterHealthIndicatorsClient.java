@@ -12,6 +12,7 @@ public class BetterHealthIndicatorsClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 
+
 		HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(BetterHealthIndicators.MOD_ID, "last_element"), HealthHud.HUD_LAYER);
 		// This entrypoint is suitable for setting up client-specific logic, such as rendering.
 		ClientTickEvents.END_CLIENT_TICK.register(client ->
