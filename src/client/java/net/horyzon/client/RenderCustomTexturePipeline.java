@@ -14,12 +14,9 @@ import net.horyzon.BetterHealthIndicators;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MappableRingBuffer;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.item.NameTagItem;
-import net.horyzon.client.BetterHealthIndicatorsClient;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
@@ -32,9 +29,10 @@ import org.lwjgl.system.MemoryUtil;
 import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
-import java.util.UUID;
 
-public class CustomRenderPipeline {
+import static net.horyzon.client.BetterHealthIndicatorsClient.HEART_TEXTURE;
+
+public class RenderCustomTexturePipeline {
 
 
     //will add actual logic later
@@ -47,7 +45,8 @@ public class CustomRenderPipeline {
     private static final Matrix4f TEXTURE_MATRIX = new Matrix4f();
 
 
-    private static final RenderPipeline HEALTH_PIPELINE = RenderPipelines.register(RenderPipeline.builder(RenderPipelines.ENTITY_SNIPPET)
+
+    private static final RenderPipeline HEALTH_PIPELINE = RenderPipelines.register(RenderPipeline.builder(RenderPipelines.GUI_TEXTURED_SNIPPET)
             .withLocation(Identifier.fromNamespaceAndPath(BetterHealthIndicators.MOD_ID, "pipeline/debug_filled_box_health_display"))
             .withDepthStencilState(Optional.empty())
             .withCull(false)
@@ -84,10 +83,10 @@ public class CustomRenderPipeline {
     }
 
     private static void renderTexturedQuad(Matrix4fc pose, BufferBuilder buffer, float x, float y, float z, float size) {
-        buffer.addVertex(pose, x,        y,        z).setUv(0f, 1f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(0xF000F0).setNormal(0f, 0f, 1f).setColor(1f, 1f, 1f, 1f);
-        buffer.addVertex(pose, x + size, y,        z).setUv(1f, 1f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(0xF000F0).setNormal(0f, 0f, 1f).setColor(1f, 1f, 1f, 1f);
-        buffer.addVertex(pose, x + size, y + size, z).setUv(1f, 0f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(0xF000F0).setNormal(0f, 0f, 1f).setColor(1f, 1f, 1f, 1f);
-        buffer.addVertex(pose, x,        y + size, z).setUv(0f, 0f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(0xF000F0).setNormal(0f, 0f, 1f).setColor(1f, 1f, 1f, 1f);
+        buffer.addVertex(pose, x,        y,        z).setColor(1f, 1f, 1f, 1f).setUv(0f, 1f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(0xF000F0).setNormal(0f, 0f, 1f);
+        buffer.addVertex(pose, x + size, y,        z).setColor(1f, 1f, 1f, 1f).setUv(1f, 1f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(0xF000F0).setNormal(0f, 0f, 1f);
+        buffer.addVertex(pose, x + size, y + size, z).setColor(1f, 1f, 1f, 1f).setUv(1f, 0f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(0xF000F0).setNormal(0f, 0f, 1f);
+        buffer.addVertex(pose, x,        y + size, z).setColor(1f, 1f, 1f, 1f).setUv(0f, 0f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(0xF000F0).setNormal(0f, 0f, 1f);
     }
 
 
@@ -147,9 +146,7 @@ public class CustomRenderPipeline {
         GpuBufferSlice dynamicTransforms = RenderSystem.getDynamicUniforms()
                 .writeTransform(RenderSystem.getModelViewMatrix(), COLOR_MODULATOR, MODEL_OFFSET, TEXTURE_MATRIX);
 
-        var texture = client.getTextureManager().getTexture(
-                Identifier.fromNamespaceAndPath(BetterHealthIndicators.MOD_ID, "textures/gui/heart.png")
-        );
+        var texture = client.getTextureManager().getTexture(HEART_TEXTURE);
 
         try (RenderPass renderPass = RenderSystem.getDevice()
                 .createCommandEncoder()

@@ -8,9 +8,10 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import org.joml.Matrix3x2fStack;
 
+import static net.horyzon.client.BetterHealthIndicatorsClient.HEART_TEXTURE;
+
 public class HealthHud {
     private static float totalTickProgress =0;
-    static Identifier HEART_TEXTURE = Identifier.fromNamespaceAndPath(BetterHealthIndicators.MOD_ID, "textures/gui/heart.png");
     public static final HudElement HUD_LAYER =
 
             (graphics, deltaTracker) -> {
