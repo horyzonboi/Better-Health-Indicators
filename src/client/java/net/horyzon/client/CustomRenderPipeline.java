@@ -6,6 +6,7 @@ import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.vertex.*;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelExtractionContext;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
@@ -15,6 +16,7 @@ import net.minecraft.client.renderer.MappableRingBuffer;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.NameTagItem;
 import net.horyzon.client.BetterHealthIndicatorsClient;
@@ -26,12 +28,15 @@ import org.joml.Vector4f;
 import org.lwjgl.system.MemoryUtil;
 
 
+
 import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import java.util.UUID;
 
 public class CustomRenderPipeline {
+
+
     //will add actual logic later
     private record HealthState(int x, int y, int z, float r, float g, float b, float a) {}
     private static HealthState healthState;
@@ -42,9 +47,10 @@ public class CustomRenderPipeline {
     private static final Matrix4f TEXTURE_MATRIX = new Matrix4f();
 
 
-    private static final RenderPipeline HEALTH_PIPELINE = RenderPipelines.register(RenderPipeline.builder(RenderPipelines.DEBUG_FILLED_SNIPPET)
+    private static final RenderPipeline HEALTH_PIPELINE = RenderPipelines.register(RenderPipeline.builder(RenderPipelines.ENTITY_SNIPPET)
             .withLocation(Identifier.fromNamespaceAndPath(BetterHealthIndicators.MOD_ID, "pipeline/debug_filled_box_health_display"))
             .withDepthStencilState(Optional.empty())
+            .withCull(false)
             .build()
     );
 
@@ -73,46 +79,15 @@ public class CustomRenderPipeline {
         if (buffer == null) {
             buffer = new BufferBuilder(ALLOCATOR, HEALTH_PIPELINE.getVertexFormatMode(), HEALTH_PIPELINE.getVertexFormat());
         }
-        renderFilledBox(matrices.last().pose(), buffer, healthState.x, healthState.y, healthState.z, healthState.x + 1, healthState.y + 1, healthState.z +1, healthState.r, healthState.g, healthState.b, healthState.a);
+        renderTexturedQuad(matrices.last().pose(), buffer, healthState.x, healthState.y, healthState.z, 1);
         matrices.popPose();
     }
 
-    private static void renderFilledBox(Matrix4fc positionMatrix, BufferBuilder buffer, float minX, float minY, float minZ, float maxX, float maxY, float maxZ, float red, float green, float blue, float alpha) {
-        // Front Face
-        buffer.addVertex(positionMatrix, minX, minY, maxZ).setColor(red, green, blue, alpha);
-        buffer.addVertex(positionMatrix, maxX, minY, maxZ).setColor(red, green, blue, alpha);
-        buffer.addVertex(positionMatrix, maxX, maxY, maxZ).setColor(red, green, blue, alpha);
-        buffer.addVertex(positionMatrix, minX, maxY, maxZ).setColor(red, green, blue, alpha);
-
-        // Back face
-        buffer.addVertex(positionMatrix, maxX, minY, minZ).setColor(red, green, blue, alpha);
-        buffer.addVertex(positionMatrix, minX, minY, minZ).setColor(red, green, blue, alpha);
-        buffer.addVertex(positionMatrix, minX, maxY, minZ).setColor(red, green, blue, alpha);
-        buffer.addVertex(positionMatrix, maxX, maxY, minZ).setColor(red, green, blue, alpha);
-
-        // Left face
-        buffer.addVertex(positionMatrix, minX, minY, minZ).setColor(red, green, blue, alpha);
-        buffer.addVertex(positionMatrix, minX, minY, maxZ).setColor(red, green, blue, alpha);
-        buffer.addVertex(positionMatrix, minX, maxY, maxZ).setColor(red, green, blue, alpha);
-        buffer.addVertex(positionMatrix, minX, maxY, minZ).setColor(red, green, blue, alpha);
-
-        // Right face
-        buffer.addVertex(positionMatrix, maxX, minY, maxZ).setColor(red, green, blue, alpha);
-        buffer.addVertex(positionMatrix, maxX, minY, minZ).setColor(red, green, blue, alpha);
-        buffer.addVertex(positionMatrix, maxX, maxY, minZ).setColor(red, green, blue, alpha);
-        buffer.addVertex(positionMatrix, maxX, maxY, maxZ).setColor(red, green, blue, alpha);
-
-        // Top face
-        buffer.addVertex(positionMatrix, minX, maxY, maxZ).setColor(red, green, blue, alpha);
-        buffer.addVertex(positionMatrix, maxX, maxY, maxZ).setColor(red, green, blue, alpha);
-        buffer.addVertex(positionMatrix, maxX, maxY, minZ).setColor(red, green, blue, alpha);
-        buffer.addVertex(positionMatrix, minX, maxY, minZ).setColor(red, green, blue, alpha);
-
-        // Bottom face
-        buffer.addVertex(positionMatrix, minX, minY, minZ).setColor(red, green, blue, alpha);
-        buffer.addVertex(positionMatrix, maxX, minY, minZ).setColor(red, green, blue, alpha);
-        buffer.addVertex(positionMatrix, maxX, minY, maxZ).setColor(red, green, blue, alpha);
-        buffer.addVertex(positionMatrix, minX, minY, maxZ).setColor(red, green, blue, alpha);
+    private static void renderTexturedQuad(Matrix4fc pose, BufferBuilder buffer, float x, float y, float z, float size) {
+        buffer.addVertex(pose, x,        y,        z).setUv(0f, 1f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(0xF000F0).setNormal(0f, 0f, 1f).setColor(1f, 1f, 1f, 1f);
+        buffer.addVertex(pose, x + size, y,        z).setUv(1f, 1f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(0xF000F0).setNormal(0f, 0f, 1f).setColor(1f, 1f, 1f, 1f);
+        buffer.addVertex(pose, x + size, y + size, z).setUv(1f, 0f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(0xF000F0).setNormal(0f, 0f, 1f).setColor(1f, 1f, 1f, 1f);
+        buffer.addVertex(pose, x,        y + size, z).setUv(0f, 0f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(0xF000F0).setNormal(0f, 0f, 1f).setColor(1f, 1f, 1f, 1f);
     }
 
 
@@ -160,38 +135,34 @@ public class CustomRenderPipeline {
         VertexFormat.IndexType indexType;
 
         if (pipeline.getVertexFormatMode() == VertexFormat.Mode.QUADS) {
-            // Sort the quads if there is translucency
             builtBuffer.sortQuads(ALLOCATOR, RenderSystem.getProjectionType().vertexSorting());
-            // Upload the index buffer
-            indices = pipeline.getVertexFormat().uploadImmediateIndexBuffer(builtBuffer.indexBuffer());
+            indices   = pipeline.getVertexFormat().uploadImmediateIndexBuffer(builtBuffer.indexBuffer());
             indexType = builtBuffer.drawState().indexType();
         } else {
-            // Use the general shape index buffer for non-quad draw modes
             RenderSystem.AutoStorageIndexBuffer shapeIndexBuffer = RenderSystem.getSequentialBuffer(pipeline.getVertexFormatMode());
-            indices = shapeIndexBuffer.getBuffer(drawParameters.indexCount());
+            indices   = shapeIndexBuffer.getBuffer(drawParameters.indexCount());
             indexType = shapeIndexBuffer.type();
         }
 
-        // Actually execute the draw
         GpuBufferSlice dynamicTransforms = RenderSystem.getDynamicUniforms()
                 .writeTransform(RenderSystem.getModelViewMatrix(), COLOR_MODULATOR, MODEL_OFFSET, TEXTURE_MATRIX);
+
+        var texture = client.getTextureManager().getTexture(
+                Identifier.fromNamespaceAndPath(BetterHealthIndicators.MOD_ID, "textures/gui/heart.png")
+        );
+
         try (RenderPass renderPass = RenderSystem.getDevice()
                 .createCommandEncoder()
-                .createRenderPass(() -> BetterHealthIndicators.MOD_ID + " example render pipeline rendering", client.getMainRenderTarget().getColorTextureView(), OptionalInt.empty(), client.getMainRenderTarget().getDepthTextureView(), OptionalDouble.empty())) {
-            renderPass.setPipeline(pipeline);
+                .createRenderPass(() -> BetterHealthIndicators.MOD_ID + " health render pipeline rendering",
+                        client.getMainRenderTarget().getColorTextureView(), OptionalInt.empty(),
+                        client.getMainRenderTarget().getDepthTextureView(), OptionalDouble.empty())) {
 
+            renderPass.setPipeline(pipeline);
             RenderSystem.bindDefaultUniforms(renderPass);
             renderPass.setUniform("DynamicTransforms", dynamicTransforms);
-
-            // Bind texture if applicable:
-            // Sampler0 is used for texture inputs in vertices
-            // renderPass.bindTexture("Sampler0", textureSetup.texure0(), textureSetup.sampler0());
-
+            renderPass.bindTexture("Sampler0", texture.getTextureView(), RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
             renderPass.setVertexBuffer(0, vertices);
             renderPass.setIndexBuffer(indices, indexType);
-
-            // The base vertex is the starting index when we copied the data into the vertex buffer divided by vertex size
-            //noinspection ConstantValue
             renderPass.drawIndexed(0 / format.getVertexSize(), 0, drawParameters.indexCount(), 1);
         }
 
