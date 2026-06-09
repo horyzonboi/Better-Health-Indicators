@@ -2,6 +2,7 @@ package net.horyzon.client;
 
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
+import com.mojang.blaze3d.pipeline.DepthStencilState;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.RenderPass;
@@ -15,20 +16,14 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MappableRingBuffer;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.rendertype.RenderType;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Matrix4f;
-import org.joml.Matrix4fc;
-import org.joml.Vector3f;
-import org.joml.Vector4f;
+import org.joml.*;
 import org.lwjgl.system.MemoryUtil;
 
 
-
-import java.util.Optional;
-import java.util.OptionalDouble;
-import java.util.OptionalInt;
+import java.util.*;
 
 import static net.horyzon.client.BetterHealthIndicatorsClient.HEART_TEXTURE;
 
@@ -36,8 +31,8 @@ public class RenderCustomTexturePipeline {
 
 
     //will add actual logic later
-    private record HealthState(int x, int y, int z, float r, float g, float b, float a) {}
-    private static HealthState healthState;
+    public record HealthState(double x, double y, double z, float r, float g, float b, float a) {}
+    public static final List<HealthState> healthStates = new ArrayList<>();
     private static BufferBuilder buffer;
     private static MappableRingBuffer vertexBuffer;
     private static final Vector4f COLOR_MODULATOR = new Vector4f(1f, 1f, 1f, 1f);
@@ -48,7 +43,7 @@ public class RenderCustomTexturePipeline {
 
     private static final RenderPipeline HEALTH_PIPELINE = RenderPipelines.register(RenderPipeline.builder(RenderPipelines.GUI_TEXTURED_SNIPPET)
             .withLocation(Identifier.fromNamespaceAndPath(BetterHealthIndicators.MOD_ID, "pipeline/debug_filled_box_health_display"))
-            .withDepthStencilState(Optional.empty())
+            .withDepthStencilState(DepthStencilState.DEFAULT)
             .withCull(false)
             .build()
     );
@@ -56,10 +51,28 @@ public class RenderCustomTexturePipeline {
     public static final ByteBufferBuilder ALLOCATOR = new ByteBufferBuilder(RenderType.SMALL_BUFFER_SIZE);
 
     protected static void extractHealth(LevelExtractionContext context) {
-        healthState = new HealthState(0, 70, 0, 0f, 0f, 1f, 0.5f);
+        healthStates.clear();
+        for (UUID uuid : StoreAndPullHealth.playerHealth.keySet()) {
+            if (Minecraft.getInstance().level == null) {
+                return;
+            }
+            Player player = Minecraft.getInstance().level.getPlayerByUUID(uuid);
+            if (player == null) {
+                return;
+            }
+            double x = player.getX();
+            double y = player.getY() + player.getBbHeight() + 0.5;
+            double z = player.getZ();
+            healthStates.add(
+                    new HealthState(x, (int) y, z, 0f, 0f, 0f, 0.5f)
+            );
+
+        }
+
     }
 
     protected static void renderAndDrawHealth(LevelRenderContext context) {
+        if (healthStates.isEmpty()) return;
         renderHealth(context);
         drawFilledThroughWalls(Minecraft.getInstance(), HEALTH_PIPELINE);
     }
@@ -78,18 +91,27 @@ public class RenderCustomTexturePipeline {
         if (buffer == null) {
             buffer = new BufferBuilder(ALLOCATOR, HEALTH_PIPELINE.getVertexFormatMode(), HEALTH_PIPELINE.getVertexFormat());
         }
-        renderTexturedQuad(matrices.last().pose(), buffer, healthState.x, healthState.y, healthState.z, 1);
+        for (HealthState state : healthStates) {
+            renderTexturedQuad(matrices.last().pose(),
+                    buffer,
+                    state.x,
+                    state.y,
+                    state.z
+            );
+        }
         matrices.popPose();
     }
 
-    private static void renderTexturedQuad(Matrix4fc pose, BufferBuilder buffer, float x, float y, float z, float size) {
-        buffer.addVertex(pose, x,        y,        z).setColor(1f, 1f, 1f, 1f).setUv(0f, 1f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(0xF000F0).setNormal(0f, 0f, 1f);
-        buffer.addVertex(pose, x + size, y,        z).setColor(1f, 1f, 1f, 1f).setUv(1f, 1f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(0xF000F0).setNormal(0f, 0f, 1f);
-        buffer.addVertex(pose, x + size, y + size, z).setColor(1f, 1f, 1f, 1f).setUv(1f, 0f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(0xF000F0).setNormal(0f, 0f, 1f);
-        buffer.addVertex(pose, x,        y + size, z).setColor(1f, 1f, 1f, 1f).setUv(0f, 0f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(0xF000F0).setNormal(0f, 0f, 1f);
+    private static void renderTexturedQuad(Matrix4fc pose, BufferBuilder buffer, double x, double y, double z) {
+        float fx = (float) x;
+        float fy = (float) y;
+        float fz = (float) z;
+        float size = 1f;
+        buffer.addVertex(pose, fx, fy, fz).setUv(0f, 1f).setColor(1f, 1f, 1f, 1f);
+        buffer.addVertex(pose,fx + size, fy, fz).setUv(1f, 1f).setColor(1f, 1f, 1f, 1f);
+        buffer.addVertex(pose,fx + size, fy + size, fz).setUv(1f, 0f).setColor(1f, 1f, 1f, 1f);
+        buffer.addVertex(pose, fx,fy + size, fz).setUv(0f, 0f).setColor(1f, 1f, 1f, 1f);
     }
-
-
 
     private static void drawFilledThroughWalls(Minecraft client, @SuppressWarnings("SameParameterValue") RenderPipeline pipeline) {
         // Build the buffer

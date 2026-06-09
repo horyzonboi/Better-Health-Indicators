@@ -13,15 +13,16 @@ public class StoreAndPullHealth {
     //the method
     public static void getHealth() {
         Minecraft minecraft = Minecraft.getInstance();
-
-
+        playerHealth.clear();
         if (minecraft.level == null) {
             return;
         }
         for(Player player : minecraft.level.players()) {
+/*
             if (player instanceof LocalPlayer) {
                 continue;
             }
+*/
             UUID pUUID = player.getUUID();
             float pHealth = player.getHealth();
             playerHealth.put(pUUID, pHealth);
