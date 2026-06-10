@@ -52,6 +52,7 @@ public class RenderCustomTexturePipeline {
 
     protected static void extractHealth(LevelExtractionContext context) {
         healthStates.clear();
+        float partialTick = context.deltaTracker().getGameTimeDeltaPartialTick(true);
         for (UUID uuid : StoreAndPullHealth.playerHealth.keySet()) {
             if (Minecraft.getInstance().level == null) {
                 return;
@@ -60,13 +61,11 @@ public class RenderCustomTexturePipeline {
             if (player == null) {
                 return;
             }
-            double x = player.getX();
-            double y = player.getY() + player.getBbHeight() + 0.5;
-            double z = player.getZ();
-            healthStates.add(
-                    new HealthState(x, (int) y, z, 0f, 0f, 0f, 0.5f)
-            );
-
+            //absolutely essential shit
+            double x = player.xOld + (player.getX() - player.xOld) * partialTick;
+            double y = player.yOld + (player.getY() - player.yOld) * partialTick;
+            double z = player.zOld + (player.getZ() - player.zOld) * partialTick;
+            healthStates.add(new HealthState(x, y + player.getBbHeight() + 0.5, z, 0f, 0f, 0f, 0.5f));
         }
 
     }
@@ -82,9 +81,12 @@ public class RenderCustomTexturePipeline {
         PoseStack matrices = context.poseStack();
         Vec3 camera = context.levelState().cameraRenderState.pos;
 
+
+
         //push
         matrices.pushPose();
         matrices.translate(-camera.x, -camera.y, -camera.z);
+
         matrices.scale(1f, 1f, 1f);
 
 
@@ -103,14 +105,16 @@ public class RenderCustomTexturePipeline {
     }
 
     private static void renderTexturedQuad(Matrix4fc pose, BufferBuilder buffer, double x, double y, double z) {
+        //it doesn't need me to be an expert programmer to know that my code is fucked
         float fx = (float) x;
         float fy = (float) y;
         float fz = (float) z;
         float size = 1f;
-        buffer.addVertex(pose, fx, fy, fz).setUv(0f, 1f).setColor(1f, 1f, 1f, 1f);
-        buffer.addVertex(pose,fx + size, fy, fz).setUv(1f, 1f).setColor(1f, 1f, 1f, 1f);
-        buffer.addVertex(pose,fx + size, fy + size, fz).setUv(1f, 0f).setColor(1f, 1f, 1f, 1f);
-        buffer.addVertex(pose, fx,fy + size, fz).setUv(0f, 0f).setColor(1f, 1f, 1f, 1f);
+        float half = size / 2f;
+        buffer.addVertex(pose, fx - half, fy - half, fz).setUv(0f, 1f).setColor(1f, 1f, 1f, 1f);
+        buffer.addVertex(pose, fx + half, fy - half, fz).setUv(1f, 1f).setColor(1f, 1f, 1f, 1f);
+        buffer.addVertex(pose, fx + half, fy + half, fz).setUv(1f, 0f).setColor(1f, 1f, 1f, 1f);
+        buffer.addVertex(pose, fx - half, fy + half, fz).setUv(0f, 0f).setColor(1f, 1f, 1f, 1f);
     }
 
     private static void drawFilledThroughWalls(Minecraft client, @SuppressWarnings("SameParameterValue") RenderPipeline pipeline) {
