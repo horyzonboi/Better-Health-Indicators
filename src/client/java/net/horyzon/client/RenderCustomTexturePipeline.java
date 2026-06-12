@@ -96,19 +96,14 @@ public class RenderCustomTexturePipeline {
 
             matrices.mulPose(context.levelState().cameraRenderState.orientation);
             matrices.scale(1f, 1f, 1f);
-            renderTexturedQuad(matrices.last().pose(), buffer, 0, 0, 0);
+            renderTexturedQuadAtOrigin(matrices.last().pose(), buffer);
             matrices.popPose();
         }
 
     }
 
-    private static void renderTexturedQuad(Matrix4fc pose, BufferBuilder buffer, double x, double y, double z) {
-        //it doesn't need me to be an expert programmer to know that my code is fucked
-        float fx = (float) x;
-        float fy = (float) y;
-        float fz = (float) z;
-        float size = 1f;
-        float half = size / 2f;
+    private static void renderTexturedQuadAtOrigin(Matrix4fc pose, BufferBuilder buffer) {
+        float half = 1f / 2f;
         buffer.addVertex(pose, - half, - half, 0).setUv(0f, 1f).setColor(1f, 1f, 1f, 1f);
         buffer.addVertex(pose, + half, - half, 0).setUv(1f, 1f).setColor(1f, 1f, 1f, 1f);
         buffer.addVertex(pose, + half, + half, 0).setUv(1f, 0f).setColor(1f, 1f, 1f, 1f);
