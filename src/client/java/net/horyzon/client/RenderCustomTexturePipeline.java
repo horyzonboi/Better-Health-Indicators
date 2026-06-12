@@ -81,27 +81,25 @@ public class RenderCustomTexturePipeline {
         PoseStack matrices = context.poseStack();
         Vec3 camera = context.levelState().cameraRenderState.pos;
 
-
-
         //push
-        matrices.pushPose();
-        matrices.translate(-camera.x, -camera.y, -camera.z);
-
-        matrices.scale(1f, 1f, 1f);
-
-
         if (buffer == null) {
             buffer = new BufferBuilder(ALLOCATOR, HEALTH_PIPELINE.getVertexFormatMode(), HEALTH_PIPELINE.getVertexFormat());
         }
         for (HealthState state : healthStates) {
-            renderTexturedQuad(matrices.last().pose(),
-                    buffer,
-                    state.x,
-                    state.y,
-                    state.z
+            matrices.pushPose();
+            matrices.translate(
+                    //world origin -> players head
+                    state.x - camera.x,
+                    state.y - camera.y,
+                    state.z - camera.z
             );
+
+            matrices.mulPose(context.levelState().cameraRenderState.orientation);
+            matrices.scale(1f, 1f, 1f);
+            renderTexturedQuad(matrices.last().pose(), buffer, 0, 0, 0);
+            matrices.popPose();
         }
-        matrices.popPose();
+
     }
 
     private static void renderTexturedQuad(Matrix4fc pose, BufferBuilder buffer, double x, double y, double z) {
@@ -111,10 +109,10 @@ public class RenderCustomTexturePipeline {
         float fz = (float) z;
         float size = 1f;
         float half = size / 2f;
-        buffer.addVertex(pose, fx - half, fy - half, fz).setUv(0f, 1f).setColor(1f, 1f, 1f, 1f);
-        buffer.addVertex(pose, fx + half, fy - half, fz).setUv(1f, 1f).setColor(1f, 1f, 1f, 1f);
-        buffer.addVertex(pose, fx + half, fy + half, fz).setUv(1f, 0f).setColor(1f, 1f, 1f, 1f);
-        buffer.addVertex(pose, fx - half, fy + half, fz).setUv(0f, 0f).setColor(1f, 1f, 1f, 1f);
+        buffer.addVertex(pose, - half, - half, 0).setUv(0f, 1f).setColor(1f, 1f, 1f, 1f);
+        buffer.addVertex(pose, + half, - half, 0).setUv(1f, 1f).setColor(1f, 1f, 1f, 1f);
+        buffer.addVertex(pose, + half, + half, 0).setUv(1f, 0f).setColor(1f, 1f, 1f, 1f);
+        buffer.addVertex(pose, - half, + half, 0).setUv(0f, 0f).setColor(1f, 1f, 1f, 1f);
     }
 
     private static void drawFilledThroughWalls(Minecraft client, @SuppressWarnings("SameParameterValue") RenderPipeline pipeline) {
