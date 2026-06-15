@@ -11,10 +11,18 @@ import net.horyzon.BetterHealthIndicators;
 
 import net.minecraft.resources.Identifier;
 
+import javax.xml.stream.Location;
+
 
 public class BetterHealthIndicatorsClient implements ClientModInitializer {
-	public static Identifier HEART_TEXTURE = Identifier.fromNamespaceAndPath(BetterHealthIndicators.MOD_ID, "textures/gui/heart_full.png");
+	static String basePath = "textures/gui/";
 
+
+	public static Identifier HEARTS_DEFAULT = Identifier.fromNamespaceAndPath(BetterHealthIndicators.MOD_ID, basePath + "default/hearts_atlas.png");
+
+	public static void createCustomBar(String string, Identifier location) {
+
+	}
 
     @Override
 	public void onInitializeClient() {
@@ -22,10 +30,6 @@ public class BetterHealthIndicatorsClient implements ClientModInitializer {
 		// This entrypoint is suitable for setting up client-specific logic, such as rendering.
 		LevelRenderEvents.END_EXTRACTION.register(RenderCustomTexturePipeline::extractHealth);
 		LevelRenderEvents.AFTER_TRANSLUCENT_TERRAIN.register(RenderCustomTexturePipeline::renderAndDrawHealth);
-
-		HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(BetterHealthIndicators.MOD_ID, "last_element"), HealthHud.HUD_LAYER);
-
-
 	}
 
 }

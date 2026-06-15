@@ -19,25 +19,38 @@ import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
-import org.joml.*;
+import org.joml.Matrix4f;
+import org.joml.Matrix4fc;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 import org.lwjgl.system.MemoryUtil;
-
 
 import java.util.*;
 
-import static net.horyzon.client.BetterHealthIndicatorsClient.HEART_TEXTURE;
+import static net.horyzon.client.BetterHealthIndicatorsClient.HEARTS_DEFAULT;
+
 
 public class RenderCustomTexturePipeline {
 
 
     //will add actual logic later
-    public record HealthState(double x, double y, double z, float r, float g, float b, float a) {}
+    public record HealthState(double x, double y, double z, float health) {}
     public static final List<HealthState> healthStates = new ArrayList<>();
     private static BufferBuilder buffer;
     private static MappableRingBuffer vertexBuffer;
     private static final Vector4f COLOR_MODULATOR = new Vector4f(1f, 1f, 1f, 1f);
     private static final Vector3f MODEL_OFFSET = new Vector3f();
     private static final Matrix4f TEXTURE_MATRIX = new Matrix4f();
+
+
+    private static final float FULL_U0 = 0f / 27f;
+    private static final float FULL_U1 = 9f / 27f;
+
+    private static final float HALF_U0 = 9f / 27f;
+    private static final float HALF_U1 = 18f / 27f;
+
+    private static final float EMPTY_U0 = 18f / 27f;
+    private static final float EMPTY_U1 = 27f / 27f;
 
 
 
@@ -65,9 +78,8 @@ public class RenderCustomTexturePipeline {
             double x = player.xOld + (player.getX() - player.xOld) * partialTick;
             double y = player.yOld + (player.getY() - player.yOld) * partialTick;
             double z = player.zOld + (player.getZ() - player.zOld) * partialTick;
-            healthStates.add(new HealthState(x, y + player.getBbHeight() + 0.5, z, 0f, 0f, 0f, 0.5f));
+            healthStates.add(new HealthState(x, y + player.getBbHeight() + 0.35f, z, StoreAndPullHealth.playerHealth.get(uuid)));
         }
-
     }
 
     protected static void renderAndDrawHealth(LevelRenderContext context) {
@@ -86,6 +98,9 @@ public class RenderCustomTexturePipeline {
             buffer = new BufferBuilder(ALLOCATOR, HEALTH_PIPELINE.getVertexFormatMode(), HEALTH_PIPELINE.getVertexFormat());
         }
         for (HealthState state : healthStates) {
+            float health = state.health();
+            int hearts = (int) (health / 2);
+            boolean halfHearts = (health % 2f) >= 0.5f;
             matrices.pushPose();
             matrices.translate(
                     //world origin -> players head
@@ -93,21 +108,52 @@ public class RenderCustomTexturePipeline {
                     state.y - camera.y,
                     state.z - camera.z
             );
-
             matrices.mulPose(context.levelState().cameraRenderState.orientation);
-            matrices.scale(1f, 1f, 1f);
-            renderTexturedQuadAtOrigin(matrices.last().pose(), buffer);
+            matrices.scale(0.25f, 0.25f, 0.25f);
+            matrices.translate(-4f, 0, 0);
+            for (int i = 0; i < 10; i++) {
+                if (i < hearts) {
+
+                    renderTexturedQuadAtOrigin(
+                            matrices.last().pose(),
+                            buffer,
+                            FULL_U0,
+                            FULL_U1
+                    );
+
+                } else if (i == hearts && halfHearts) {
+
+                    renderTexturedQuadAtOrigin(
+                            matrices.last().pose(),
+                            buffer,
+                            HALF_U0,
+                            HALF_U1
+                    );
+
+                } else {
+
+                    renderTexturedQuadAtOrigin(
+                            matrices.last().pose(),
+                            buffer,
+                            EMPTY_U0,
+                            EMPTY_U1
+                    );
+                }
+                matrices.translate(0.9f, 0, 0);
+            }
+
+
             matrices.popPose();
         }
 
     }
 
-    private static void renderTexturedQuadAtOrigin(Matrix4fc pose, BufferBuilder buffer) {
+    private static void renderTexturedQuadAtOrigin(Matrix4fc pose, BufferBuilder buffer, float u0, float u1) {
         float half = 1f / 2f;
-        buffer.addVertex(pose, - half, - half, 0).setUv(0f, 1f).setColor(1f, 1f, 1f, 1f);
-        buffer.addVertex(pose, + half, - half, 0).setUv(1f, 1f).setColor(1f, 1f, 1f, 1f);
-        buffer.addVertex(pose, + half, + half, 0).setUv(1f, 0f).setColor(1f, 1f, 1f, 1f);
-        buffer.addVertex(pose, - half, + half, 0).setUv(0f, 0f).setColor(1f, 1f, 1f, 1f);
+        buffer.addVertex(pose, - half, - half, 0).setUv(u0, 1f).setColor(1f, 1f, 1f, 1f);
+        buffer.addVertex(pose, + half, - half, 0).setUv(u1, 1f).setColor(1f, 1f, 1f, 1f);
+        buffer.addVertex(pose, + half, + half, 0).setUv(u1, 0f).setColor(1f, 1f, 1f, 1f);
+        buffer.addVertex(pose, - half, + half, 0).setUv(u0, 0f).setColor(1f, 1f, 1f, 1f);
     }
 
     private static void drawFilledThroughWalls(Minecraft client, @SuppressWarnings("SameParameterValue") RenderPipeline pipeline) {
@@ -165,7 +211,7 @@ public class RenderCustomTexturePipeline {
         GpuBufferSlice dynamicTransforms = RenderSystem.getDynamicUniforms()
                 .writeTransform(RenderSystem.getModelViewMatrix(), COLOR_MODULATOR, MODEL_OFFSET, TEXTURE_MATRIX);
 
-        var texture = client.getTextureManager().getTexture(HEART_TEXTURE);
+        var texture = client.getTextureManager().getTexture(HEARTS_DEFAULT);
 
         try (RenderPass renderPass = RenderSystem.getDevice()
                 .createCommandEncoder()
