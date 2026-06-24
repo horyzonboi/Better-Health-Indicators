@@ -27,8 +27,8 @@ public record GetPlayerHealthPayload(UUID uuid, float health) implements CustomP
             ByteBufCodecs.FLOAT, GetPlayerHealthPayload::health,
             GetPlayerHealthPayload::new
     );
-    public static void HealthSync(ServerPlayer target, ServerLevel serverLevel) {
-        GetPlayerHealthPayload payload = new GetPlayerHealthPayload(target.getUUID(), target.getHealth());
+    public static void HealthSync(ServerPlayer target, ServerLevel serverLevel, Float health) {
+        GetPlayerHealthPayload payload = new GetPlayerHealthPayload(target.getUUID(), health);
         for (ServerPlayer player : PlayerLookup.level(serverLevel)) {
             ServerPlayNetworking.send(player, payload);
         }
