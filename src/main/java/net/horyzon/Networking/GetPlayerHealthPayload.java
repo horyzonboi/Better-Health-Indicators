@@ -31,6 +31,8 @@ public record GetPlayerHealthPayload(UUID uuid, float health) implements CustomP
         GetPlayerHealthPayload payload = new GetPlayerHealthPayload(target.getUUID(), health);
         for (ServerPlayer player : PlayerLookup.level(serverLevel)) {
             ServerPlayNetworking.send(player, payload);
+            //debug
+            System.out.println("SEND " + health);
         }
     }
 

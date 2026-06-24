@@ -35,6 +35,7 @@ public class BetterHealthIndicatorsClient implements ClientModInitializer {
 				return;
 			}
 			StoreAndPullHealth.playerHealth.put(payload.uuid(), payload.health());
+			System.out.println("REC " + payload.health());
 		}
 		));
 		ClientTickEvents.END_CLIENT_TICK.register(_ -> StoreAndPullHealth.getHealth());

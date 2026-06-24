@@ -74,6 +74,9 @@ public class RenderCustomTexturePipeline {
             if (player == null) {
                 return;
             }
+            Float customHealth = StoreAndPullHealth.playerHealth.get(uuid);
+
+
             //interpolation
             double x = player.xOld + (player.getX() - player.xOld) * partialTick;
             double y = player.yOld + (player.getY() - player.yOld) * partialTick;
@@ -99,8 +102,16 @@ public class RenderCustomTexturePipeline {
         }
         for (HealthState state : healthStates) {
             float health = state.health();
-            int hearts = (int) (health / 2);
-            boolean halfHearts = (health % 2) >= 0.5;
+
+            int halfHeartUnits = (int) Math.ceil(health);
+
+            int hearts = halfHeartUnits / 2;
+            boolean halfHearts = (halfHeartUnits % 2) == 1;
+            System.out.println(
+                            "health=" + health +
+                            " hearts=" + hearts +
+                            " half=" + halfHearts
+            );
             matrices.pushPose();
             matrices.translate(
                     //world origin -> players head
@@ -141,8 +152,6 @@ public class RenderCustomTexturePipeline {
                 }
                 matrices.translate(0.9f, 0, 0);
             }
-
-
             matrices.popPose();
         }
 

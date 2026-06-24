@@ -20,5 +20,6 @@ public class BetterHealthIndicators implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		PayloadTypeRegistry.clientboundPlay().register(GetPlayerHealthPayload.TYPE, GetPlayerHealthPayload.CODEC);
+
 	}
 }
