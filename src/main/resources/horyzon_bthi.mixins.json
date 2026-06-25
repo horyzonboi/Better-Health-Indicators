@@ -3,8 +3,7 @@
   "package": "net.horyzon.mixin",
   "compatibilityLevel": "JAVA_25",
   "mixins": [
-    "EntityHealthMixin",
-    "ExampleMixin"
+    "EntityHealthMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -1,6 +1,5 @@
 package net.horyzon.Networking;
 
-import io.netty.buffer.ByteBuf;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.horyzon.BetterHealthIndicators;
@@ -12,27 +11,31 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import org.apache.logging.log4j.core.jmx.Server;
 
 import java.util.UUID;
-import java.util.stream.Stream;
 
-public record GetPlayerHealthPayload(UUID uuid, float health) implements CustomPacketPayload {
+public record PlayerHealthPayload(UUID uuid, float health) implements CustomPacketPayload {
 
     public static final Identifier PLAYER_HEALTH_PAYLOAD_ID = Identifier.fromNamespaceAndPath(BetterHealthIndicators.MOD_ID, "player_health");
 
-    public static final CustomPacketPayload.Type<GetPlayerHealthPayload>  TYPE = new CustomPacketPayload.Type<>(PLAYER_HEALTH_PAYLOAD_ID);
+    public static final CustomPacketPayload.Type<PlayerHealthPayload>  TYPE = new CustomPacketPayload.Type<>(PLAYER_HEALTH_PAYLOAD_ID);
 
-    public static final StreamCodec<FriendlyByteBuf, GetPlayerHealthPayload> CODEC = StreamCodec.composite(
-            UUIDUtil.STREAM_CODEC, GetPlayerHealthPayload::uuid,
-            ByteBufCodecs.FLOAT, GetPlayerHealthPayload::health,
-            GetPlayerHealthPayload::new
+    public static final StreamCodec<FriendlyByteBuf, PlayerHealthPayload> CODEC = StreamCodec.composite(
+            UUIDUtil.STREAM_CODEC, PlayerHealthPayload::uuid,
+            ByteBufCodecs.FLOAT, PlayerHealthPayload::health,
+            PlayerHealthPayload::new
     );
-    public static void HealthSync(ServerPlayer target, ServerLevel serverLevel, Float health) {
-        GetPlayerHealthPayload payload = new GetPlayerHealthPayload(target.getUUID(), health);
+    public static void broadcastHealth(ServerPlayer target, ServerLevel serverLevel, Float health) {
+        PlayerHealthPayload payload = new PlayerHealthPayload(target.getUUID(), health);
         for (ServerPlayer player : PlayerLookup.level(serverLevel)) {
+            System.out.println(
+                    "SENDING " +
+                            target.getName().getString() +
+                            " health=" +
+                            health
+            );
             ServerPlayNetworking.send(player, payload);
-            //debug
-            System.out.println("SEND " + health);
         }
     }
 

@@ -1,4 +1,4 @@
-package net.horyzon.client;
+package net.horyzon.client.Rendering;
 
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
@@ -12,6 +12,7 @@ import com.mojang.blaze3d.vertex.*;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelExtractionContext;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
 import net.horyzon.BetterHealthIndicators;
+import net.horyzon.client.BetterHealthIndicatorsClient;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MappableRingBuffer;
 import net.minecraft.client.renderer.RenderPipelines;
@@ -28,9 +29,10 @@ import org.lwjgl.system.MemoryUtil;
 import java.util.*;
 
 import static net.horyzon.client.BetterHealthIndicatorsClient.HEARTS_DEFAULT;
+import static net.horyzon.client.BetterHealthIndicatorsClient.playerHealth;
 
 
-public class RenderCustomTexturePipeline {
+public class HeartRenderPipeline {
 
 
     //will add actual logic later
@@ -63,29 +65,28 @@ public class RenderCustomTexturePipeline {
 
     public static final ByteBufferBuilder ALLOCATOR = new ByteBufferBuilder(RenderType.SMALL_BUFFER_SIZE);
 
-    protected static void extractHealth(LevelExtractionContext context) {
+    public static void extractHealth(LevelExtractionContext context) {
         healthStates.clear();
         float partialTick = context.deltaTracker().getGameTimeDeltaPartialTick(true);
-        for (UUID uuid : StoreAndPullHealth.playerHealth.keySet()) {
+        for (UUID uuid : playerHealth.keySet()) {
             if (Minecraft.getInstance().level == null) {
                 return;
             }
             Player player = Minecraft.getInstance().level.getPlayerByUUID(uuid);
             if (player == null) {
-                return;
+                continue;
             }
-            Float customHealth = StoreAndPullHealth.playerHealth.get(uuid);
-
+            Float customHealth = playerHealth.get(uuid);
 
             //interpolation
             double x = player.xOld + (player.getX() - player.xOld) * partialTick;
             double y = player.yOld + (player.getY() - player.yOld) * partialTick;
             double z = player.zOld + (player.getZ() - player.zOld) * partialTick;
-            healthStates.add(new HealthState(x, y + player.getBbHeight() + 0.5f, z, StoreAndPullHealth.playerHealth.get(uuid)));
+            healthStates.add(new HealthState(x, y + player.getBbHeight() + 0.5f, z, customHealth));
         }
     }
 
-    protected static void renderAndDrawHealth(LevelRenderContext context) {
+    public static void renderAndDrawHealth(LevelRenderContext context) {
         if (healthStates.isEmpty()) return;
         renderHealth(context);
         drawFilledThroughWalls(Minecraft.getInstance(), HEALTH_PIPELINE);
@@ -107,11 +108,6 @@ public class RenderCustomTexturePipeline {
 
             int hearts = halfHeartUnits / 2;
             boolean halfHearts = (halfHeartUnits % 2) == 1;
-            System.out.println(
-                            "health=" + health +
-                            " hearts=" + hearts +
-                            " half=" + halfHearts
-            );
             matrices.pushPose();
             matrices.translate(
                     //world origin -> players head
