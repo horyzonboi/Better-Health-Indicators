@@ -13,14 +13,15 @@ public class BetterHealthIndicatorsClient implements ClientModInitializer {
 
 	public static Identifier HEARTS_DEFAULT = Identifier.fromNamespaceAndPath(BetterHealthIndicators.MOD_ID, basePath + "default/hearts_atlas.png");
 
+	//Add ability for users to use custom hearts
 	public static void createCustomBar(String string, Identifier location) {
 	}
     @Override
 	public void onInitializeClient() {
-		ClientTickEvents.END_CLIENT_TICK.register(_ -> StoreAndPullHealth.getHealth());
+		ClientTickEvents.END_CLIENT_TICK.register(_ -> HealthStore.putHealth());
 		// This entrypoint is suitable for setting up client-specific logic, such as rendering.
-		LevelRenderEvents.END_EXTRACTION.register(RenderCustomTexturePipeline::extractHealth);
-		LevelRenderEvents.AFTER_TRANSLUCENT_TERRAIN.register(RenderCustomTexturePipeline::renderAndDrawHealth);
+		LevelRenderEvents.END_EXTRACTION.register(HeartRenderPipeline::extractHealth);
+		LevelRenderEvents.AFTER_TRANSLUCENT_TERRAIN.register(HeartRenderPipeline::renderAndDrawHealth);
 	}
 
 }

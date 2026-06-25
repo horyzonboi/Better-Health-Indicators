@@ -2,16 +2,15 @@ package net.horyzon.client;
 
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.HashMap;
 import java.util.UUID;
 
-public class StoreAndPullHealth {
+public class HealthStore {
     public static HashMap<UUID, Float> playerHealth = new  HashMap<>();
     //the method
-    public static void getHealth() {
+    public static void putHealth() {
         Minecraft minecraft = Minecraft.getInstance();
         playerHealth.clear();
         if (minecraft.level == null) {
@@ -23,9 +22,8 @@ public class StoreAndPullHealth {
                 continue;
             }
 */
-            UUID pUUID = player.getUUID();
-            float pHealth = player.getHealth();
-            playerHealth.put(pUUID, pHealth);
+
+            playerHealth.put(player.getUUID(), player.getHealth());
         }
     }
 }

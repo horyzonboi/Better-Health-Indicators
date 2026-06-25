@@ -1,6 +1,6 @@
 package net.horyzon.client.mixin;
 
-import net.horyzon.client.RenderCustomTexturePipeline;
+import net.horyzon.client.HeartRenderPipeline;
 import net.minecraft.client.renderer.GameRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -11,6 +11,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class GameRendererMixin {
         @Inject(method = "close", at = @At("RETURN"))
         private void onGameRendererClose(CallbackInfo ci) {
-            RenderCustomTexturePipeline.close();
+            HeartRenderPipeline.close();
         }
 }

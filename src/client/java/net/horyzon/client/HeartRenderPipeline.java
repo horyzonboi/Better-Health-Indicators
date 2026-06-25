@@ -30,7 +30,7 @@ import java.util.*;
 import static net.horyzon.client.BetterHealthIndicatorsClient.HEARTS_DEFAULT;
 
 
-public class RenderCustomTexturePipeline {
+public class HeartRenderPipeline {
 
 
     //will add actual logic later
@@ -66,7 +66,7 @@ public class RenderCustomTexturePipeline {
     protected static void extractHealth(LevelExtractionContext context) {
         healthStates.clear();
         float partialTick = context.deltaTracker().getGameTimeDeltaPartialTick(true);
-        for (UUID uuid : StoreAndPullHealth.playerHealth.keySet()) {
+        for (UUID uuid : HealthStore.playerHealth.keySet()) {
             if (Minecraft.getInstance().level == null) {
                 return;
             }
@@ -74,14 +74,12 @@ public class RenderCustomTexturePipeline {
             if (player == null) {
                 return;
             }
-            Float customHealth = StoreAndPullHealth.playerHealth.get(uuid);
-
 
             //interpolation
             double x = player.xOld + (player.getX() - player.xOld) * partialTick;
             double y = player.yOld + (player.getY() - player.yOld) * partialTick;
             double z = player.zOld + (player.getZ() - player.zOld) * partialTick;
-            healthStates.add(new HealthState(x, y + player.getBbHeight() + 0.5f, z, StoreAndPullHealth.playerHealth.get(uuid)));
+            healthStates.add(new HealthState(x, y + player.getBbHeight() + 0.8f, z, HealthStore.playerHealth.get(uuid)));
         }
     }
 
