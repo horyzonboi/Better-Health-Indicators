@@ -1,6 +1,6 @@
 package net.horyzon.client.mixin;
 
-import net.horyzon.client.HeartRenderPipeline;
+import net.horyzon.client.Rendering.HeartRenderPipeline;
 import net.minecraft.client.renderer.GameRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

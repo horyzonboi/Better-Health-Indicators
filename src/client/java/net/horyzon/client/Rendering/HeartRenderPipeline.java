@@ -1,4 +1,4 @@
-package net.horyzon.client;
+package net.horyzon.client.Rendering;
 
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
@@ -12,6 +12,7 @@ import com.mojang.blaze3d.vertex.*;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelExtractionContext;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
 import net.horyzon.BetterHealthIndicators;
+import net.horyzon.client.HealthStore;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MappableRingBuffer;
 import net.minecraft.client.renderer.RenderPipelines;
@@ -63,7 +64,7 @@ public class HeartRenderPipeline {
 
     public static final ByteBufferBuilder ALLOCATOR = new ByteBufferBuilder(RenderType.SMALL_BUFFER_SIZE);
 
-    protected static void extractHealth(LevelExtractionContext context) {
+    public static void extractHealth(LevelExtractionContext context) {
         healthStates.clear();
         float partialTick = context.deltaTracker().getGameTimeDeltaPartialTick(true);
         for (UUID uuid : HealthStore.playerHealth.keySet()) {
@@ -83,7 +84,7 @@ public class HeartRenderPipeline {
         }
     }
 
-    protected static void renderAndDrawHealth(LevelRenderContext context) {
+    public static void renderAndDrawHealth(LevelRenderContext context) {
         if (healthStates.isEmpty()) return;
         renderHealth(context);
         drawFilledThroughWalls(Minecraft.getInstance(), HEALTH_PIPELINE);
@@ -98,6 +99,7 @@ public class HeartRenderPipeline {
         if (buffer == null) {
             buffer = new BufferBuilder(ALLOCATOR, HEALTH_PIPELINE.getVertexFormatMode(), HEALTH_PIPELINE.getVertexFormat());
         }
+        float placementOffset = -4f;
         for (HealthState state : healthStates) {
             float health = state.health();
 
@@ -105,11 +107,7 @@ public class HeartRenderPipeline {
 
             int hearts = halfHeartUnits / 2;
             boolean halfHearts = (halfHeartUnits % 2) == 1;
-            System.out.println(
-                            "health=" + health +
-                            " hearts=" + hearts +
-                            " half=" + halfHearts
-            );
+
             matrices.pushPose();
             matrices.translate(
                     //world origin -> players head
@@ -119,7 +117,7 @@ public class HeartRenderPipeline {
             );
             matrices.mulPose(context.levelState().cameraRenderState.orientation);
             matrices.scale(0.25f, 0.25f, 0.25f);
-            matrices.translate(-4f, 0, 0);
+            matrices.translate(placementOffset, 0, 0);
             for (int i = 0; i < 10; i++) {
                 if (i < hearts) {
 
