@@ -2,6 +2,7 @@ package net.horyzon.client.Rendering;
 
 import net.horyzon.client.HealthStore;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -22,8 +23,10 @@ public class SettingScreen extends Screen {
                             (HealthStore.displayOwnHealth ? "ON" : "OFF")
             ));
         }).bounds(40, 40, 120, 20).build();
+     
         addRenderableWidget(buttonWidget);
     }
+
 
     @Override
     public void extractRenderState(@NonNull GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
